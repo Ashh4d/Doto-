@@ -1,0 +1,1056 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Doto - Modern Task Management</title>
+    <meta name="description" content="Doto is a clean, warm and minimal task management dashboard with real Supabase authentication." />
+    <meta property="og:title" content="Doto - Modern Task Management" />
+    <meta property="og:description" content="Doto is a clean, warm and minimal task management dashboard with real Supabase authentication." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23e26d46'%3E%3Cpath d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="/src/index.css" />
+  </head>
+  <body class="bg-[#FAF7F2] text-[#1E1A17] antialiased min-h-screen font-sans selection:bg-[#FFE5D8] selection:text-[#9A3816]">
+    
+    <!-- ========================================================================= -->
+    <!-- AUTHENTICATION CONTAINER (Sign In, Sign Up, Verification, Password Reset) -->
+    <!-- ========================================================================= -->
+    <div id="auth-container" class="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-[#FAF7F2]">
+      <div class="w-full max-w-md">
+
+        <!-- Supabase Configuration Notice (Shown only if env vars are missing/placeholder) -->
+        <div id="supabase-config-alert" class="hidden mb-5 bg-[#FFF3E8] border border-[#FFE2CC] rounded-3xl p-4 sm:p-5 shadow-sm text-left">
+          <div class="flex items-start gap-3">
+            <div class="w-8 h-8 rounded-full bg-[#E26D46] text-white flex items-center justify-center shrink-0 mt-0.5 font-bold text-sm">
+              ℹ
+            </div>
+            <div class="min-w-0 flex-1">
+              <h4 class="text-xs sm:text-sm font-bold text-[#1E1A17]">Supabase Setup Required</h4>
+              <p class="text-xs text-[#735342] mt-1 leading-relaxed">
+                To enable live user authentication, please configure your Supabase credentials in your project environment:
+              </p>
+              <div class="mt-2 text-[11px] font-mono bg-white/80 p-2.5 rounded-xl border border-[#F0EBE2] text-stone-700 space-y-1">
+                <div><span class="text-[#E26D46] font-semibold">VITE_SUPABASE_URL</span>=https://&lt;project&gt;.supabase.co</div>
+                <div><span class="text-[#E26D46] font-semibold">VITE_SUPABASE_PUBLISHABLE_KEY</span>=&lt;your-publishable-key&gt;</div>
+              </div>
+              <p class="text-[11px] text-[#8C6856] mt-2">
+                Found in: <span class="font-semibold">Supabase Dashboard &rarr; Project Settings &rarr; API &rarr; Project URL &amp; Publishable key (or anon public key)</span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 1. SIGN IN CARD -->
+        <div id="login-card" class="bg-white border border-[#F0EBE2] rounded-3xl shadow-[0_4px_24px_rgba(42,30,23,0.06)] p-6 sm:p-8">
+          <!-- Logo & Brand Header -->
+          <div class="flex flex-col items-center text-center mb-6">
+            <div class="w-12 h-12 rounded-2xl bg-[#E26D46] flex items-center justify-center text-white shadow-sm mb-3">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <span class="font-extrabold text-xl tracking-tight text-[#1E1A17]">Doto</span>
+            <h2 class="text-lg font-bold text-[#1E1A17] mt-3">Welcome back</h2>
+            <p class="text-xs text-stone-500 mt-0.5">Sign in to manage your daily routines and tasks</p>
+          </div>
+
+          <!-- Login Error Banner -->
+          <div id="login-error-banner" class="hidden mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-2xl flex items-start gap-2">
+            <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span id="login-error-text" class="flex-1 font-medium"></span>
+          </div>
+
+          <!-- Login Form -->
+          <form id="login-form" class="space-y-4" novalidate>
+            <div>
+              <label for="login-email" class="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1.5">
+                Email Address
+              </label>
+              <input 
+                type="email" 
+                id="login-email" 
+                required 
+                placeholder="name@example.com"
+                autocomplete="email"
+                class="w-full px-4 py-2.5 bg-white border border-[#EAE3D8] rounded-2xl text-sm placeholder:text-stone-400 text-[#1E1A17] focus:outline-none focus:ring-2 focus:ring-[#E26D46]/20 focus:border-[#E26D46] transition-all"
+              />
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <label for="login-password" class="block text-xs font-bold text-stone-700 uppercase tracking-wider">
+                  Password
+                </label>
+                <button 
+                  type="button" 
+                  id="goto-forgot-pwd" 
+                  class="text-xs font-bold text-[#E26D46] hover:text-[#C55732] transition-colors cursor-pointer"
+                >
+                  Forgot password?
+                </button>
+              </div>
+              <div class="relative">
+                <input 
+                  type="password" 
+                  id="login-password" 
+                  required 
+                  placeholder="Enter your password"
+                  autocomplete="current-password"
+                  class="w-full pl-4 pr-11 py-2.5 bg-white border border-[#EAE3D8] rounded-2xl text-sm placeholder:text-stone-400 text-[#1E1A17] focus:outline-none focus:ring-2 focus:ring-[#E26D46]/20 focus:border-[#E26D46] transition-all"
+                />
+                <button 
+                  type="button" 
+                  id="login-toggle-pwd" 
+                  aria-label="Toggle password visibility" 
+                  class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-stone-400 hover:text-stone-600 cursor-pointer"
+                >
+                  <svg id="login-eye-icon" class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <button 
+              type="submit" 
+              id="login-submit-btn" 
+              class="w-full py-3 px-4 text-sm font-bold text-white bg-[#362114] hover:bg-black active:scale-[0.98] rounded-full shadow-sm transition-all cursor-pointer flex items-center justify-center gap-2 mt-2"
+            >
+              <span id="login-submit-text">Sign In</span>
+              <svg id="login-spinner" class="w-4 h-4 animate-spin hidden" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            </button>
+          </form>
+
+          <div class="mt-6 pt-5 border-t border-[#F5F0E8] text-center">
+            <p class="text-xs text-stone-500">
+              Don't have an account? 
+              <button id="goto-signup-btn" type="button" class="font-bold text-[#E26D46] hover:text-[#C55732] cursor-pointer">
+                Create an account
+              </button>
+            </p>
+          </div>
+        </div>
+
+        <!-- 2. SIGN UP CARD -->
+        <div id="signup-card" class="bg-white border border-[#F0EBE2] rounded-3xl shadow-[0_4px_24px_rgba(42,30,23,0.06)] p-6 sm:p-8 hidden">
+          <div class="flex flex-col items-center text-center mb-6">
+            <div class="w-12 h-12 rounded-2xl bg-[#E26D46] flex items-center justify-center text-white shadow-sm mb-3">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+              </svg>
+            </div>
+            <span class="font-extrabold text-xl tracking-tight text-[#1E1A17]">Doto</span>
+            <h2 class="text-lg font-bold text-[#1E1A17] mt-3">Create your account</h2>
+            <p class="text-xs text-stone-500 mt-0.5">Start organizing your routines and priorities</p>
+          </div>
+
+          <!-- Signup Error Banner -->
+          <div id="signup-error-banner" class="hidden mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-2xl flex items-start gap-2">
+            <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span id="signup-error-text" class="flex-1 font-medium"></span>
+          </div>
+
+          <!-- Signup Form -->
+          <form id="signup-form" class="space-y-3.5" novalidate>
+            <div>
+              <label for="signup-name" class="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1.5">
+                Full Name
+              </label>
+              <input 
+                type="text" 
+                id="signup-name" 
+                required 
+                placeholder="e.g., Alex Rivera"
+                autocomplete="name"
+                class="w-full px-4 py-2.5 bg-white border border-[#EAE3D8] rounded-2xl text-sm placeholder:text-stone-400 text-[#1E1A17] focus:outline-none focus:ring-2 focus:ring-[#E26D46]/20 focus:border-[#E26D46] transition-all"
+              />
+            </div>
+
+            <div>
+              <label for="signup-email" class="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1.5">
+                Email Address
+              </label>
+              <input 
+                type="email" 
+                id="signup-email" 
+                required 
+                placeholder="name@example.com"
+                autocomplete="email"
+                class="w-full px-4 py-2.5 bg-white border border-[#EAE3D8] rounded-2xl text-sm placeholder:text-stone-400 text-[#1E1A17] focus:outline-none focus:ring-2 focus:ring-[#E26D46]/20 focus:border-[#E26D46] transition-all"
+              />
+            </div>
+
+            <div>
+              <label for="signup-password" class="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1.5">
+                Password <span class="text-[11px] text-stone-400 font-normal">(min. 6 characters)</span>
+              </label>
+              <div class="relative">
+                <input 
+                  type="password" 
+                  id="signup-password" 
+                  required 
+                  minlength="6"
+                  placeholder="Create a strong password"
+                  autocomplete="new-password"
+                  class="w-full pl-4 pr-11 py-2.5 bg-white border border-[#EAE3D8] rounded-2xl text-sm placeholder:text-stone-400 text-[#1E1A17] focus:outline-none focus:ring-2 focus:ring-[#E26D46]/20 focus:border-[#E26D46] transition-all"
+                />
+                <button 
+                  type="button" 
+                  id="signup-toggle-pwd" 
+                  aria-label="Toggle password visibility" 
+                  class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-stone-400 hover:text-stone-600 cursor-pointer"
+                >
+                  <svg id="signup-eye-icon" class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label for="signup-confirm-password" class="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1.5">
+                Confirm Password
+              </label>
+              <input 
+                type="password" 
+                id="signup-confirm-password" 
+                required 
+                placeholder="Repeat your password"
+                autocomplete="new-password"
+                class="w-full px-4 py-2.5 bg-white border border-[#EAE3D8] rounded-2xl text-sm placeholder:text-stone-400 text-[#1E1A17] focus:outline-none focus:ring-2 focus:ring-[#E26D46]/20 focus:border-[#E26D46] transition-all"
+              />
+            </div>
+
+            <button 
+              type="submit" 
+              id="signup-submit-btn" 
+              class="w-full py-3 px-4 text-sm font-bold text-white bg-[#362114] hover:bg-black active:scale-[0.98] rounded-full shadow-sm transition-all cursor-pointer flex items-center justify-center gap-2 mt-3"
+            >
+              <span id="signup-submit-text">Create Account</span>
+              <svg id="signup-spinner" class="w-4 h-4 animate-spin hidden" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            </button>
+          </form>
+
+          <div class="mt-6 pt-5 border-t border-[#F5F0E8] text-center">
+            <p class="text-xs text-stone-500">
+              Already have an account? 
+              <button id="goto-login-btn" type="button" class="font-bold text-[#E26D46] hover:text-[#C55732] cursor-pointer">
+                Sign in
+              </button>
+            </p>
+          </div>
+        </div>
+
+        <!-- 3. FORGOT PASSWORD CARD -->
+        <div id="forgot-password-card" class="bg-white border border-[#F0EBE2] rounded-3xl shadow-[0_4px_24px_rgba(42,30,23,0.06)] p-6 sm:p-8 hidden">
+          <div class="flex flex-col items-center text-center mb-6">
+            <div class="w-12 h-12 rounded-2xl bg-[#FFF3E8] text-[#E26D46] flex items-center justify-center shadow-sm mb-3">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+            </div>
+            <h2 class="text-lg font-bold text-[#1E1A17]">Reset your password</h2>
+            <p class="text-xs text-stone-500 mt-1 max-w-xs">
+              Enter the email address registered with your account and we will send you a recovery link.
+            </p>
+          </div>
+
+          <!-- Message Banner -->
+          <div id="forgot-message-banner" class="hidden mb-4 p-3 text-xs rounded-2xl flex items-start gap-2"></div>
+
+          <form id="forgot-form" class="space-y-4" novalidate>
+            <div>
+              <label for="forgot-email" class="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1.5">
+                Registered Email
+              </label>
+              <input 
+                type="email" 
+                id="forgot-email" 
+                required 
+                placeholder="name@example.com"
+                autocomplete="email"
+                class="w-full px-4 py-2.5 bg-white border border-[#EAE3D8] rounded-2xl text-sm placeholder:text-stone-400 text-[#1E1A17] focus:outline-none focus:ring-2 focus:ring-[#E26D46]/20 focus:border-[#E26D46] transition-all"
+              />
+            </div>
+
+            <button 
+              type="submit" 
+              id="forgot-submit-btn" 
+              class="w-full py-3 px-4 text-sm font-bold text-white bg-[#362114] hover:bg-black active:scale-[0.98] rounded-full shadow-sm transition-all cursor-pointer flex items-center justify-center gap-2"
+            >
+              <span id="forgot-submit-text">Send Reset Link</span>
+              <svg id="forgot-spinner" class="w-4 h-4 animate-spin hidden" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            </button>
+          </form>
+
+          <div class="mt-6 pt-5 border-t border-[#F5F0E8] text-center">
+            <button id="forgot-back-btn" type="button" class="text-xs font-bold text-stone-600 hover:text-stone-900 cursor-pointer">
+              &larr; Back to Sign In
+            </button>
+          </div>
+        </div>
+
+        <!-- 4. EMAIL VERIFICATION SENT CARD -->
+        <div id="verify-email-card" class="bg-white border border-[#F0EBE2] rounded-3xl shadow-[0_4px_24px_rgba(42,30,23,0.06)] p-6 sm:p-8 text-center hidden">
+          <div class="w-14 h-14 rounded-full bg-[#EAF6EC] text-[#2E7D32] flex items-center justify-center mx-auto mb-4">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          </div>
+          <h2 class="text-lg font-bold text-[#1E1A17]">Check your inbox</h2>
+          <p class="text-xs text-stone-500 mt-2 leading-relaxed">
+            We've sent an email verification link to <br/><span id="verify-email-display" class="font-bold text-[#1E1A17]"></span>.
+          </p>
+          <p class="text-[11px] text-stone-400 mt-2">
+            Please click the link in your email to confirm your account and sign in.
+          </p>
+          <button 
+            id="verify-back-btn" 
+            type="button" 
+            class="mt-6 w-full py-2.5 px-4 text-xs font-bold text-white bg-[#362114] hover:bg-black rounded-full shadow-xs transition-all cursor-pointer"
+          >
+            Back to Sign In
+          </button>
+        </div>
+
+        <!-- 5. PASSWORD UPDATE (RECOVERY) CARD -->
+        <div id="reset-password-card" class="bg-white border border-[#F0EBE2] rounded-3xl shadow-[0_4px_24px_rgba(42,30,23,0.06)] p-6 sm:p-8 hidden">
+          <div class="flex flex-col items-center text-center mb-6">
+            <div class="w-12 h-12 rounded-2xl bg-[#FFEBD9] text-[#E26D46] flex items-center justify-center shadow-sm mb-3">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+            </div>
+            <h2 class="text-lg font-bold text-[#1E1A17]">Set new password</h2>
+            <p class="text-xs text-stone-500 mt-0.5">Choose a secure password for your Doto account</p>
+          </div>
+
+          <div id="reset-pwd-error-banner" class="hidden mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-2xl flex items-start gap-2">
+            <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span id="reset-pwd-error-text" class="flex-1 font-medium"></span>
+          </div>
+
+          <form id="reset-pwd-form" class="space-y-4" novalidate>
+            <div>
+              <label for="new-password-input" class="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1.5">
+                New Password
+              </label>
+              <input 
+                type="password" 
+                id="new-password-input" 
+                required 
+                minlength="6"
+                placeholder="At least 6 characters"
+                class="w-full px-4 py-2.5 bg-white border border-[#EAE3D8] rounded-2xl text-sm placeholder:text-stone-400 text-[#1E1A17] focus:outline-none focus:ring-2 focus:ring-[#E26D46]/20 focus:border-[#E26D46] transition-all"
+              />
+            </div>
+
+            <div>
+              <label for="new-password-confirm" class="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1.5">
+                Confirm New Password
+              </label>
+              <input 
+                type="password" 
+                id="new-password-confirm" 
+                required 
+                placeholder="Repeat new password"
+                class="w-full px-4 py-2.5 bg-white border border-[#EAE3D8] rounded-2xl text-sm placeholder:text-stone-400 text-[#1E1A17] focus:outline-none focus:ring-2 focus:ring-[#E26D46]/20 focus:border-[#E26D46] transition-all"
+              />
+            </div>
+
+            <button 
+              type="submit" 
+              id="reset-pwd-submit-btn" 
+              class="w-full py-3 px-4 text-sm font-bold text-white bg-[#362114] hover:bg-black active:scale-[0.98] rounded-full shadow-sm transition-all cursor-pointer flex items-center justify-center gap-2 mt-2"
+            >
+              <span id="reset-pwd-submit-text">Update Password</span>
+              <svg id="reset-pwd-spinner" class="w-4 h-4 animate-spin hidden" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            </button>
+          </form>
+        </div>
+
+      </div>
+    </div>
+
+
+    <!-- ========================================================================= -->
+    <!-- PROTECTED DASHBOARD CONTAINER (Visible only when user is authenticated) -->
+    <!-- ========================================================================= -->
+    <div id="dashboard-container" class="hidden min-h-screen flex flex-col lg:flex-row font-sans">
+      
+      <!-- Mobile Header (Visible on screens < 1024px) -->
+      <header class="lg:hidden sticky top-0 z-30 flex items-center justify-between px-4 py-3 bg-[#FAF7F2]/90 backdrop-blur-md border-b border-[#F0EBE2]">
+        <div class="flex items-center gap-2.5">
+          <button 
+            id="mobile-menu-btn" 
+            type="button" 
+            aria-label="Open Navigation Menu" 
+            class="p-2 -ml-1 text-stone-600 hover:text-stone-900 hover:bg-[#F2ECE3] active:bg-[#EAE2D7] rounded-xl transition-colors cursor-pointer"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-xl bg-[#E26D46] flex items-center justify-center text-white shadow-xs shrink-0">
+              <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <span class="font-bold text-base tracking-tight text-[#1E1A17]">Doto</span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button 
+            id="mobile-add-btn" 
+            type="button" 
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-[#2A1E17] hover:bg-black active:scale-[0.98] rounded-full shadow-xs transition-all cursor-pointer"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            <span>Add Task</span>
+          </button>
+
+          <button 
+            id="mobile-logout-btn" 
+            type="button" 
+            aria-label="Sign Out" 
+            title="Sign Out"
+            class="p-2 text-stone-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors cursor-pointer"
+          >
+            <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Mobile Drawer Overlay -->
+      <div id="mobile-drawer-backdrop" class="fixed inset-0 bg-stone-900/30 backdrop-blur-xs z-40 hidden transition-opacity"></div>
+
+      <!-- Sidebar Navigation -->
+      <aside 
+        id="sidebar" 
+        class="fixed inset-y-0 left-0 z-50 w-68 bg-[#FAF7F2] border-r border-[#F0EBE2] flex flex-col transform -translate-x-full lg:translate-x-0 lg:static lg:h-screen lg:shrink-0 transition-transform duration-200 ease-in-out shadow-lg lg:shadow-none"
+      >
+        <!-- Brand Header -->
+        <div class="p-6 flex items-center justify-between border-b border-[#F0EBE2]">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-[#E26D46] flex items-center justify-center text-white shadow-sm shrink-0">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div class="flex flex-col">
+              <span class="font-bold text-lg tracking-tight text-[#1E1A17] leading-none">Doto</span>
+              <span class="text-[11px] text-stone-400 mt-1 font-medium">Daily Routine & Goals</span>
+            </div>
+          </div>
+          <button 
+            id="mobile-drawer-close" 
+            type="button" 
+            aria-label="Close Navigation Menu" 
+            class="lg:hidden p-1.5 text-stone-400 hover:text-stone-700 hover:bg-[#F2ECE3] rounded-lg transition-colors cursor-pointer"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Navigation Content -->
+        <div class="px-4 py-6 flex-1 flex flex-col justify-between overflow-y-auto">
+          <div class="space-y-6">
+            
+            <!-- Views Section -->
+            <div>
+              <div class="px-3 mb-2 text-[11px] font-semibold text-stone-400 uppercase tracking-wider">
+                Navigation
+              </div>
+              <nav class="space-y-1.5" aria-label="Main Navigation">
+                <button 
+                  id="nav-all" 
+                  type="button" 
+                  class="nav-item w-full flex items-center justify-between px-3.5 py-2.5 text-sm font-semibold rounded-2xl transition-all duration-150 bg-[#FFF3E8] text-[#9A3816] cursor-pointer" 
+                  data-view="all"
+                >
+                  <div class="flex items-center gap-3">
+                    <svg class="w-4.5 h-4.5 text-[#E26D46] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                    </svg>
+                    <span>All Tasks</span>
+                  </div>
+                  <span id="nav-all-count" class="text-xs font-semibold tabular-nums px-2 py-0.5 rounded-full bg-[#FFE5D8] text-[#9A3816]">0</span>
+                </button>
+
+                <button 
+                  id="nav-pending" 
+                  type="button" 
+                  class="nav-item w-full flex items-center justify-between px-3.5 py-2.5 text-sm font-medium rounded-2xl transition-all duration-150 text-stone-600 hover:text-stone-900 hover:bg-[#F2ECE3] cursor-pointer" 
+                  data-view="pending"
+                >
+                  <div class="flex items-center gap-3">
+                    <svg class="w-4.5 h-4.5 text-stone-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>Pending</span>
+                  </div>
+                  <span id="nav-pending-count" class="text-xs font-semibold tabular-nums px-2 py-0.5 rounded-full text-stone-500">0</span>
+                </button>
+
+                <button 
+                  id="nav-completed" 
+                  type="button" 
+                  class="nav-item w-full flex items-center justify-between px-3.5 py-2.5 text-sm font-medium rounded-2xl transition-all duration-150 text-stone-600 hover:text-stone-900 hover:bg-[#F2ECE3] cursor-pointer" 
+                  data-view="completed"
+                >
+                  <div class="flex items-center gap-3">
+                    <svg class="w-4.5 h-4.5 text-stone-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>Completed</span>
+                  </div>
+                  <span id="nav-completed-count" class="text-xs font-semibold tabular-nums px-2 py-0.5 rounded-full text-stone-500">0</span>
+                </button>
+              </nav>
+            </div>
+
+            <!-- Priority Filter -->
+            <div>
+              <div class="flex items-center justify-between px-3 mb-2">
+                <span class="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Priority Filter</span>
+                <button 
+                  id="priority-clear-btn" 
+                  type="button" 
+                  class="hidden text-[11px] text-[#E26D46] hover:text-[#C55732] font-semibold cursor-pointer"
+                >
+                  Clear
+                </button>
+              </div>
+              <div class="space-y-1">
+                <button 
+                  id="priority-filter-high" 
+                  type="button" 
+                  class="priority-btn w-full flex items-center justify-between px-3.5 py-1.5 text-xs text-stone-600 hover:text-stone-900 hover:bg-[#F2ECE3] rounded-xl transition-colors cursor-pointer"
+                  data-priority="High"
+                >
+                  <span class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-[#E26D46] shrink-0"></span>
+                    <span>High Priority</span>
+                  </span>
+                  <span id="priority-high-count" class="font-mono tabular-nums text-stone-400 text-[11px]">0</span>
+                </button>
+                <button 
+                  id="priority-filter-medium" 
+                  type="button" 
+                  class="priority-btn w-full flex items-center justify-between px-3.5 py-1.5 text-xs text-stone-600 hover:text-stone-900 hover:bg-[#F2ECE3] rounded-xl transition-colors cursor-pointer"
+                  data-priority="Medium"
+                >
+                  <span class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-[#F59E0B] shrink-0"></span>
+                    <span>Medium Priority</span>
+                  </span>
+                  <span id="priority-medium-count" class="font-mono tabular-nums text-stone-400 text-[11px]">0</span>
+                </button>
+                <button 
+                  id="priority-filter-low" 
+                  type="button" 
+                  class="priority-btn w-full flex items-center justify-between px-3.5 py-1.5 text-xs text-stone-600 hover:text-stone-900 hover:bg-[#F2ECE3] rounded-xl transition-colors cursor-pointer"
+                  data-priority="Low"
+                >
+                  <span class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-stone-400 shrink-0"></span>
+                    <span>Low Priority</span>
+                  </span>
+                  <span id="priority-low-count" class="font-mono tabular-nums text-stone-400 text-[11px]">0</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Authenticated User Profile & Logout -->
+          <div class="pt-4 border-t border-[#F0EBE2]">
+            <div class="flex items-center justify-between p-2.5 rounded-2xl bg-white border border-[#F0EBE2] shadow-2xs">
+              <div class="flex items-center gap-3 min-w-0 flex-1">
+                <div class="w-9 h-9 rounded-full bg-[#FFEBD9] border border-stone-200 flex items-center justify-center shrink-0 font-bold text-xs text-[#E26D46]">
+                  <span id="user-avatar-initials">AR</span>
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p id="user-display-name" class="text-xs font-bold text-[#1E1A17] truncate">Alex Rivera</p>
+                  <p id="user-display-email" class="text-[11px] text-stone-500 truncate">alex@example.com</p>
+                </div>
+              </div>
+              <button 
+                id="sidebar-logout-btn" 
+                type="button" 
+                title="Sign out of Doto"
+                aria-label="Sign out" 
+                class="p-2 text-stone-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors cursor-pointer shrink-0"
+              >
+                <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </aside>
+
+      <!-- Main Content Area -->
+      <main class="flex-1 min-w-0 overflow-y-auto">
+        <div class="max-w-4xl mx-auto px-4 sm:px-8 py-6 sm:py-10 space-y-6 sm:space-y-8">
+          
+          <!-- Header: Morning Greeting + Date + Avatar -->
+          <header class="flex items-center justify-between gap-4">
+            <div>
+              <h1 id="greeting-heading" class="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1E1A17] leading-tight">
+                Morning, Alex
+              </h1>
+              <p id="current-date-text" class="mt-1 text-xs sm:text-sm text-stone-500 font-medium">
+                Thursday, 12 March, 2026
+              </p>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <!-- Search Bar -->
+              <div class="relative hidden sm:block w-64">
+                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-stone-400">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <input 
+                  id="search-input"
+                  type="text" 
+                  placeholder="Search routine & tasks..." 
+                  class="w-full pl-9 pr-10 py-2 bg-white border border-[#EAE3D8] rounded-full text-xs sm:text-sm placeholder:text-stone-400 text-[#1E1A17] shadow-2xs focus:outline-none focus:ring-2 focus:ring-[#E26D46]/20 focus:border-[#E26D46] transition-all"
+                  autocomplete="off"
+                />
+                <button 
+                  id="search-clear-btn" 
+                  type="button" 
+                  aria-label="Clear search" 
+                  class="hidden absolute inset-y-0 right-0 pr-3 flex items-center text-stone-400 hover:text-stone-600 cursor-pointer"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+              </div>
+
+              <!-- Profile Avatar Badge with Logout trigger -->
+              <div class="relative group">
+                <button 
+                  type="button" 
+                  id="top-avatar-btn" 
+                  class="w-11 h-11 rounded-full bg-[#FFEBD9] border-2 border-white shadow-sm flex items-center justify-center font-bold text-sm text-[#E26D46] shrink-0 cursor-pointer hover:scale-105 transition-transform" 
+                  title="Account"
+                >
+                  <span id="top-avatar-initials">AR</span>
+                </button>
+              </div>
+            </div>
+          </header>
+
+          <!-- Mobile Search (Visible on small screens) -->
+          <div class="sm:hidden relative">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-stone-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            </div>
+            <input 
+              id="mobile-search-input"
+              type="text" 
+              placeholder="Search tasks..." 
+              class="w-full pl-9 pr-10 py-2.5 bg-white border border-[#EAE3D8] rounded-full text-xs placeholder:text-stone-400 text-[#1E1A17] shadow-2xs focus:outline-none focus:ring-2 focus:ring-[#E26D46]/20 focus:border-[#E26D46]"
+            />
+          </div>
+
+          <!-- Horizontal Week Date Strip -->
+          <section aria-label="Calendar Week Strip" class="bg-white/80 border border-[#F0EBE2] rounded-3xl p-3 sm:p-4 shadow-[0_2px_12px_rgba(42,30,23,0.03)]">
+            <div id="week-strip" class="grid grid-cols-7 gap-1 sm:gap-2 text-center">
+              <!-- Rendered dynamically by JavaScript with Mon - Sun and day dates -->
+            </div>
+          </section>
+
+          <!-- Supabase Integration Status Card (Development Diagnostics Only) -->
+          <section id="supabase-status-card" class="hidden bg-white border border-[#EAE3D8] rounded-3xl p-5 sm:p-6 shadow-[0_2px_14px_rgba(42,30,23,0.03)] transition-all">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div class="flex items-start sm:items-center gap-3.5">
+                <div class="w-10 h-10 rounded-2xl bg-[#1E1A17] flex items-center justify-center text-[#3ECF8E] shrink-0 shadow-2xs">
+                  <!-- Supabase emblem -->
+                  <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                    <path d="M21.362 9.354H12V.396a.396.396 0 0 0-.716-.233L.169 13.916a.396.396 0 0 0 .307.632H9.5v9.052a.396.396 0 0 0 .716.233l11.45-13.847a.396.396 0 0 0-.304-.632z"/>
+                  </svg>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <h2 class="text-sm sm:text-base font-bold text-[#1E1A17]">Supabase Connection</h2>
+                    <span id="supabase-status-pill" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                      <span id="supabase-status-dot" class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                      <span id="supabase-status-text">Awaiting Credentials</span>
+                    </span>
+                  </div>
+                  <p id="supabase-status-desc" class="text-xs text-stone-500 mt-1 leading-relaxed">
+                    Client configured with <span class="font-mono text-stone-700 font-medium">@supabase/supabase-js</span>. Enter your Project URL &amp; Publishable Key to connect.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Action buttons -->
+              <div class="flex items-center gap-2.5 shrink-0 self-end sm:self-center">
+                <button 
+                  id="toggle-supabase-guide-btn" 
+                  type="button" 
+                  class="px-3.5 py-2 text-xs font-semibold text-stone-600 hover:text-stone-900 bg-[#FAF7F2] hover:bg-[#F2ECE3] border border-[#EAE3D8] rounded-full transition-colors cursor-pointer"
+                >
+                  Credential Guide
+                </button>
+                <button 
+                  id="test-supabase-btn" 
+                  type="button" 
+                  class="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-[#1E1A17] hover:bg-black active:scale-[0.98] rounded-full shadow-xs transition-all cursor-pointer"
+                >
+                  <svg id="test-supabase-spinner" class="w-3.5 h-3.5 animate-spin hidden" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span id="test-supabase-text">Verify Client</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Verification Output Details Box -->
+            <div id="supabase-verify-result" class="hidden mt-4 pt-4 border-t border-[#F0EBE2] text-xs">
+              <div id="supabase-verify-box" class="p-3 rounded-2xl bg-[#FAF7F2] border border-[#EAE3D8] text-stone-700 space-y-1 font-mono text-[11px]">
+                <div class="flex items-center justify-between text-stone-400 text-[10px] uppercase font-sans font-bold">
+                  <span>Verification Output</span>
+                  <span id="supabase-verify-time"></span>
+                </div>
+                <div id="supabase-verify-message" class="font-sans text-xs font-medium text-stone-800"></div>
+                <div id="supabase-verify-url" class="text-stone-500 break-all text-[11px]"></div>
+              </div>
+            </div>
+
+            <!-- Expandable Credential Location Guide -->
+            <div id="supabase-guide-panel" class="hidden mt-4 pt-4 border-t border-[#F0EBE2] text-xs space-y-3">
+              <div class="bg-[#FFF8F3] border border-[#FFE2CC] rounded-2xl p-4 text-[#735342] space-y-2">
+                <div class="font-bold text-[#2A1E17] text-xs flex items-center gap-1.5">
+                  <svg class="w-4 h-4 text-[#E26D46]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  <span>Where to enter your credentials</span>
+                </div>
+                <p class="leading-relaxed">
+                  Open your <code class="px-1.5 py-0.5 bg-white rounded-md border border-[#F0EBE2] font-mono text-[#9A3816] font-bold">.env</code> file (or configure environment variables in AI Studio) and set:
+                </p>
+                <div class="bg-white/90 p-3 rounded-xl border border-[#F0EBE2] font-mono text-[11px] text-stone-800 space-y-1.5 selection:bg-[#FFE5D8]">
+                  <div><span class="text-[#E26D46] font-bold">VITE_SUPABASE_URL</span>="https://&lt;your-project-id&gt;.supabase.co"</div>
+                  <div><span class="text-[#E26D46] font-bold">VITE_SUPABASE_PUBLISHABLE_KEY</span>="&lt;your-publishable-or-anon-key&gt;"</div>
+                </div>
+                <div class="text-[11px] text-stone-500 flex items-center gap-1 pt-1">
+                  <span>📍 Found in:</span>
+                  <span class="font-medium text-stone-700">Supabase Dashboard &rarr; Project Settings &rarr; API &rarr; Project URL &amp; Publishable API Key</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Warm Feature Banner ("Set the reminder") -->
+          <section aria-label="Daily Reminder" class="bg-[#FFF3E8] border border-[#FFE2CC] rounded-3xl p-5 sm:p-6 relative overflow-hidden shadow-[0_4px_16px_rgba(226,109,70,0.06)]">
+            <div class="relative z-10 flex items-center justify-between gap-4">
+              <div class="max-w-md space-y-2">
+                <h2 class="text-base sm:text-lg font-bold text-[#2A1E17]">Set the reminder</h2>
+                <p class="text-xs sm:text-sm text-[#735342] leading-relaxed">
+                  Never miss your morning routine! Set a reminder to stay on track and maintain your momentum.
+                </p>
+                <div class="pt-1">
+                  <button 
+                    id="banner-add-btn" 
+                    type="button" 
+                    class="inline-flex items-center gap-2 px-5 py-2 text-xs font-bold text-white bg-[#362114] hover:bg-[#1E120B] active:scale-[0.98] rounded-full shadow-xs transition-all cursor-pointer"
+                  >
+                    <span>Set Now</span>
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Bell Illustration -->
+              <div class="shrink-0 flex items-center justify-center p-2 text-[#E26D46]">
+                <div class="relative w-18 h-18 sm:w-22 sm:h-22 flex items-center justify-center">
+                  <div class="absolute -left-1 text-[#E26D46]/70 text-lg font-bold">)</div>
+                  <div class="absolute -right-1 text-[#E26D46]/70 text-lg font-bold">(</div>
+                  <svg class="w-14 h-14 sm:w-16 sm:h-16 text-[#F87146] filter drop-shadow-sm" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C10.34 2 9 3.34 9 5v.35C6.72 6.3 5 8.44 5 11v5l-2 2v1h18v-1l-2-2v-5c0-2.56-1.72-4.7-4-5.65V5c0-1.66-1.34-3-3-3zm0 20c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2z"/>
+                  </svg>
+                  <span class="absolute -bottom-1 -left-1 w-1.5 h-1.5 rounded-full bg-[#E26D46]"></span>
+                  <span class="absolute -bottom-1 -right-1 w-1.5 h-1.5 rounded-full bg-[#F59E0B]"></span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Stats Overview Row -->
+          <section aria-labelledby="overview-heading" class="grid grid-cols-3 gap-3 sm:gap-4">
+            <h2 id="overview-heading" class="sr-only">Task Statistics</h2>
+            
+            <div class="bg-white border border-[#F0EBE2] rounded-2xl sm:rounded-3xl p-3 sm:p-5 shadow-[0_2px_10px_rgba(42,30,23,0.02)]">
+              <span class="text-[10px] sm:text-xs font-semibold text-stone-400 uppercase tracking-wider block">Total Tasks</span>
+              <div class="mt-2 flex items-baseline gap-1.5">
+                <span id="overview-total-count" class="text-2xl sm:text-3xl font-extrabold text-[#1E1A17] font-mono tabular-nums">0</span>
+                <span class="text-[11px] text-stone-400 hidden sm:inline">tasks</span>
+              </div>
+            </div>
+
+            <div class="bg-white border border-[#F0EBE2] rounded-2xl sm:rounded-3xl p-3 sm:p-5 shadow-[0_2px_10px_rgba(42,30,23,0.02)]">
+              <span class="text-[10px] sm:text-xs font-semibold text-[#E26D46] uppercase tracking-wider block">Completed</span>
+              <div class="mt-2 flex items-baseline gap-1.5">
+                <span id="overview-completed-count" class="text-2xl sm:text-3xl font-extrabold text-[#E26D46] font-mono tabular-nums">0</span>
+                <span id="completion-percentage" class="text-[11px] text-[#C55732] font-semibold hidden sm:inline">0%</span>
+              </div>
+            </div>
+
+            <div class="bg-white border border-[#F0EBE2] rounded-2xl sm:rounded-3xl p-3 sm:p-5 shadow-[0_2px_10px_rgba(42,30,23,0.02)]">
+              <span class="text-[10px] sm:text-xs font-semibold text-[#F59E0B] uppercase tracking-wider block">Pending</span>
+              <div class="mt-2 flex items-baseline gap-1.5">
+                <span id="overview-pending-count" class="text-2xl sm:text-3xl font-extrabold text-[#F59E0B] font-mono tabular-nums">0</span>
+                <span class="text-[11px] text-stone-400 hidden sm:inline">left</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- Daily Routine / Task List Section -->
+          <section class="space-y-4" aria-labelledby="task-list-heading">
+            
+            <!-- Section Bar -->
+            <div class="flex items-center justify-between gap-3 flex-wrap">
+              <div class="flex items-center gap-2">
+                <h2 id="task-list-heading" class="text-lg sm:text-xl font-extrabold text-[#1E1A17] tracking-tight">
+                  Daily routine
+                </h2>
+                <span id="task-badge-count" class="text-xs font-mono tabular-nums text-stone-500 bg-[#F2ECE3] px-2 py-0.5 rounded-full font-semibold">0</span>
+                <span id="tasks-sync-indicator" class="hidden inline-flex items-center gap-1.5 text-xs font-medium text-stone-500">
+                  <svg class="w-3.5 h-3.5 animate-spin text-[#E26D46]" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>Syncing...</span>
+                </span>
+                <span id="active-filter-indicator" class="hidden text-xs text-[#9A3816] bg-[#FFF3E8] border border-[#FFE2CC] px-2.5 py-0.5 rounded-full items-center gap-1">
+                  <span id="active-filter-text">High Priority</span>
+                  <button id="clear-filter-btn" type="button" aria-label="Clear filter" class="hover:text-black cursor-pointer font-bold">✕</button>
+                </span>
+              </div>
+
+              <!-- Filter Tabs -->
+              <div class="flex items-center gap-1 bg-[#F0EBE2]/70 p-1 rounded-full text-xs font-semibold">
+                <button 
+                  type="button" 
+                  class="filter-tab px-3 py-1 rounded-full transition-all cursor-pointer bg-white text-[#1E1A17] shadow-2xs font-bold" 
+                  data-filter="all"
+                >
+                  All
+                </button>
+                <button 
+                  type="button" 
+                  class="filter-tab px-3 py-1 rounded-full transition-all cursor-pointer text-stone-600 hover:text-stone-900" 
+                  data-filter="pending"
+                >
+                  Pending
+                </button>
+                <button 
+                  type="button" 
+                  class="filter-tab px-3 py-1 rounded-full transition-all cursor-pointer text-stone-600 hover:text-stone-900" 
+                  data-filter="completed"
+                >
+                  Completed
+                </button>
+              </div>
+            </div>
+
+            <!-- Database Error Banner -->
+            <div id="tasks-error-banner" class="hidden p-3.5 bg-red-50 border border-red-200 text-red-700 text-xs rounded-2xl flex items-center justify-between gap-3">
+              <div class="flex items-start gap-2 min-w-0">
+                <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span id="tasks-error-text" class="font-medium break-words"></span>
+              </div>
+              <button id="tasks-retry-btn" type="button" class="px-3 py-1 bg-white border border-red-200 hover:bg-red-100 text-red-700 font-bold rounded-full shrink-0 transition-colors cursor-pointer">
+                Retry
+              </button>
+            </div>
+
+            <!-- Timeline Task List Container -->
+            <div class="relative">
+              <ul id="task-list" class="timeline-track space-y-3" role="list">
+                <!-- Task items rendered dynamically by JavaScript -->
+              </ul>
+
+              <!-- Initial Loading State -->
+              <div id="tasks-loading-state" class="hidden py-12 px-6 text-center bg-white border border-[#F0EBE2] rounded-3xl shadow-sm">
+                <div class="w-12 h-12 mx-auto rounded-full bg-[#FFF3E8] text-[#E26D46] flex items-center justify-center mb-3">
+                  <svg class="w-6 h-6 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                </div>
+                <h3 class="text-sm font-bold text-[#1E1A17]">Loading your tasks</h3>
+                <p class="text-xs text-stone-500 mt-1">Fetching your routines from Supabase...</p>
+              </div>
+
+              <!-- Contextual Empty State -->
+              <div id="empty-state" class="hidden py-12 px-6 text-center bg-white border border-[#F0EBE2] rounded-3xl shadow-sm">
+                <div class="w-12 h-12 mx-auto rounded-full bg-[#FFF3E8] text-[#E26D46] flex items-center justify-center mb-3">
+                  <svg id="empty-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h3 id="empty-title" class="text-sm font-bold text-[#1E1A17]">No tasks found</h3>
+                <p id="empty-subtitle" class="text-xs text-stone-500 mt-1 max-w-sm mx-auto">
+                  No tasks match your current view. Enjoy your day or add a new goal!
+                </p>
+                <div class="mt-4 flex items-center justify-center gap-2">
+                  <button 
+                    id="empty-action-btn" 
+                    type="button" 
+                    class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-[#362114] hover:bg-black rounded-full shadow-xs transition-all cursor-pointer"
+                  >
+                    <span id="empty-action-text">Add New Task</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </section>
+
+        </div>
+      </main>
+
+      <!-- Floating Circular Action Button (FAB) -->
+      <button 
+        id="fab-add-task-btn" 
+        type="button" 
+        aria-label="Create new task" 
+        class="fixed bottom-6 right-6 z-40 w-13 h-13 rounded-full bg-[#2A1E17] hover:bg-black active:scale-95 text-white shadow-xl flex items-center justify-center transition-all cursor-pointer group"
+        title="Add Task"
+      >
+        <svg class="w-6 h-6 group-hover:rotate-90 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+        </svg>
+      </button>
+
+      <!-- Add Task Modal Dialog -->
+      <div 
+        id="add-task-modal" 
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/40 backdrop-blur-xs hidden" 
+        role="dialog" 
+        aria-modal="true" 
+        aria-labelledby="modal-title"
+      >
+        <div 
+          id="modal-box"
+          class="bg-white border border-[#F0EBE2] rounded-3xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all modal-content-animate"
+        >
+          <!-- Modal Header -->
+          <div class="flex items-center justify-between px-6 py-4.5 border-b border-[#F5F0E8] bg-[#FAF7F2]">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-full bg-[#FFF3E8] text-[#E26D46] flex items-center justify-center shrink-0">
+                <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+                </svg>
+              </div>
+              <div>
+                <h3 id="modal-title" class="text-base font-bold text-[#1E1A17] leading-tight">Add Routine or Task</h3>
+                <p class="text-[11px] text-stone-500 mt-0.5">Keep your daily routine organized</p>
+              </div>
+            </div>
+            <button 
+              id="close-modal-btn" 
+              type="button" 
+              aria-label="Close dialog" 
+              class="text-stone-400 hover:text-stone-700 hover:bg-[#F2ECE3] p-1.5 rounded-full transition-colors cursor-pointer"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Modal Form -->
+          <form id="add-task-form" class="p-6 space-y-4" novalidate>
+            <div id="modal-error-banner" class="hidden p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-2xl flex items-start gap-2">
+              <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <span id="modal-error-text" class="flex-1 font-medium"></span>
+            </div>
+
+            <div>
+              <label for="task-title-input" class="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1.5">
+                Task Title <span class="text-[#E26D46]">*</span>
+              </label>
+              <input 
+                type="text" 
+                id="task-title-input" 
+                name="title" 
+                placeholder="e.g., Drink a glass of water, Meditate, Write summary" 
+                class="w-full px-4 py-2.5 bg-white border border-[#EAE3D8] rounded-2xl text-sm placeholder:text-stone-400 text-[#1E1A17] focus:outline-none focus:ring-2 focus:ring-[#E26D46]/20 focus:border-[#E26D46] transition-all"
+                autocomplete="off"
+              />
+              <p id="task-title-error" class="hidden text-xs text-red-600 mt-1.5 font-medium flex items-center gap-1">
+                <svg class="w-3.5 h-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
+                <span>Please enter a task title.</span>
+              </p>
+            </div>
+
+            <div>
+              <label for="task-deadline-input" class="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1.5">
+                Deadline / Date
+              </label>
+              <input 
+                type="date" 
+                id="task-deadline-input" 
+                name="deadline"
+                class="w-full px-4 py-2.5 bg-white border border-[#EAE3D8] rounded-2xl text-sm text-[#1E1A17] focus:outline-none focus:ring-2 focus:ring-[#E26D46]/20 focus:border-[#E26D46] transition-all cursor-pointer"
+              />
+              <p class="text-[11px] text-stone-400 mt-1">Select a due date (optional)</p>
+            </div>
+
+            <div class="pt-4 flex items-center justify-end gap-3 border-t border-[#F5F0E8]">
+              <button 
+                id="cancel-modal-btn" 
+                type="button" 
+                class="px-5 py-2.5 text-xs font-bold text-stone-600 hover:text-stone-900 hover:bg-[#F2ECE3] rounded-full transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button 
+                id="create-task-btn" 
+                type="submit" 
+                class="px-6 py-2.5 text-xs font-bold text-white bg-[#362114] hover:bg-black active:scale-[0.98] rounded-full shadow-xs transition-all cursor-pointer inline-flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                <svg id="create-task-spinner" class="w-3.5 h-3.5 animate-spin hidden" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span id="create-task-text">Create Task</span>
+              </button>
+            </div>
+          </form>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Toast Notification (Shared) -->
+    <div 
+      id="toast-notification" 
+      class="fixed bottom-6 left-6 z-50 flex items-center gap-3 px-4 py-3 bg-[#2A1E17] text-white text-xs sm:text-sm font-medium rounded-2xl shadow-xl border border-stone-800 transition-all duration-300 transform translate-y-12 opacity-0 pointer-events-none"
+      role="status"
+      aria-live="polite"
+    >
+      <div id="toast-icon-wrapper" class="w-6 h-6 rounded-full bg-[#E26D46] text-white flex items-center justify-center shrink-0">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
+      </div>
+      <div class="text-white font-medium">
+        <span id="toast-message">Notification</span>
+      </div>
+      <button 
+        id="toast-close-btn" 
+        type="button" 
+        class="ml-2 text-stone-400 hover:text-white p-1 rounded-md transition-colors cursor-pointer"
+        aria-label="Dismiss notification"
+      >
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+      </button>
+    </div>
+
+    <!-- Script Entry Point -->
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

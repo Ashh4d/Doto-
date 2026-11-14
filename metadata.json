@@ -1,0 +1,6 @@
+{
+  "name": "TaskFlow - Modern Task Management",
+  "description": "A clean, modern and minimal task management SaaS dashboard to manage your day with ease.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

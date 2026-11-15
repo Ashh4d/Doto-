@@ -368,7 +368,7 @@
     <!-- ========================================================================= -->
     <!-- PROTECTED DASHBOARD CONTAINER (Visible only when user is authenticated) -->
     <!-- ========================================================================= -->
-    <div id="dashboard-container" class="hidden min-h-screen flex flex-col lg:flex-row font-sans">
+    <div id="dashboard-container" class="hidden min-h-screen lg:h-screen lg:overflow-hidden flex flex-col lg:flex-row font-sans">
       
       <!-- Mobile Header (Visible on screens < 1024px) -->
       <header class="lg:hidden sticky top-0 z-30 flex items-center justify-between px-4 py-3 bg-[#FAF7F2]/90 backdrop-blur-md border-b border-[#F0EBE2]">
@@ -423,10 +423,10 @@
       <!-- Sidebar Navigation -->
       <aside 
         id="sidebar" 
-        class="fixed inset-y-0 left-0 z-50 w-68 bg-[#FAF7F2] border-r border-[#F0EBE2] flex flex-col transform -translate-x-full lg:translate-x-0 lg:static lg:h-screen lg:shrink-0 transition-transform duration-200 ease-in-out shadow-lg lg:shadow-none"
+        class="fixed inset-y-0 left-0 z-50 w-68 h-screen bg-[#FAF7F2] border-r border-[#F0EBE2] flex flex-col overflow-hidden transform -translate-x-full lg:translate-x-0 lg:static lg:h-screen lg:shrink-0 transition-transform duration-200 ease-in-out shadow-lg lg:shadow-none"
       >
         <!-- Brand Header -->
-        <div class="p-6 flex items-center justify-between border-b border-[#F0EBE2]">
+        <div class="p-6 flex items-center justify-between border-b border-[#F0EBE2] shrink-0">
           <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-2xl bg-[#E26D46] flex items-center justify-center text-white shadow-sm shrink-0">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -451,7 +451,7 @@
         </div>
 
         <!-- Navigation Content -->
-        <div class="px-4 py-6 flex-1 flex flex-col justify-between overflow-y-auto">
+        <div class="px-4 py-6 flex-1 flex flex-col min-h-0">
           <div class="space-y-6">
             
             <!-- Views Section -->
@@ -561,7 +561,7 @@
           </div>
 
           <!-- Authenticated User Profile & Logout -->
-          <div class="pt-4 border-t border-[#F0EBE2]">
+          <div class="mt-auto pt-4 border-t border-[#F0EBE2] shrink-0">
             <div class="flex items-center justify-between p-2.5 rounded-2xl bg-white border border-[#F0EBE2] shadow-2xs">
               <div class="flex items-center gap-3 min-w-0 flex-1">
                 <div class="w-9 h-9 rounded-full bg-[#FFEBD9] border border-stone-200 flex items-center justify-center shrink-0 font-bold text-xs text-[#E26D46]">
@@ -588,7 +588,7 @@
       </aside>
 
       <!-- Main Content Area -->
-      <main class="flex-1 min-w-0 overflow-y-auto">
+      <main class="flex-1 min-w-0 lg:h-full overflow-y-auto">
         <div class="max-w-4xl mx-auto px-4 sm:px-8 py-6 sm:py-10 space-y-6 sm:space-y-8">
           
           <!-- Header: Morning Greeting + Date + Avatar -->

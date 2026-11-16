@@ -256,9 +256,15 @@ const resetPwdErrorText = document.getElementById('reset-pwd-error-text') as HTM
 
 // User Profile Elements in Dashboard
 const userDisplayName = document.getElementById('user-display-name') as HTMLElement;
-const userDisplayEmail = document.getElementById('user-display-email') as HTMLElement;
 const userAvatarInitials = document.getElementById('user-avatar-initials') as HTMLElement;
 const topAvatarInitials = document.getElementById('top-avatar-initials') as HTMLElement;
+const profileTriggerBtn = document.getElementById('profile-trigger-btn') as HTMLButtonElement | null;
+const profilePopover = document.getElementById('profile-popover') as HTMLDivElement | null;
+const popoverAvatarInitials = document.getElementById('popover-avatar-initials') as HTMLElement | null;
+const popoverUserName = document.getElementById('popover-user-name') as HTMLElement | null;
+const popoverUserEmail = document.getElementById('popover-user-email') as HTMLElement | null;
+const profilePopoverCloseBtn = document.getElementById('profile-popover-close-btn') as HTMLButtonElement | null;
+const profilePopoverDismissBtn = document.getElementById('profile-popover-dismiss-btn') as HTMLButtonElement | null;
 const sidebarLogoutBtn = document.getElementById('sidebar-logout-btn') as HTMLButtonElement;
 const mobileLogoutBtn = document.getElementById('mobile-logout-btn') as HTMLButtonElement;
 const editDisplayNameBtn = document.getElementById('edit-display-name-btn') as HTMLButtonElement | null;
@@ -420,24 +426,25 @@ function updateUserProfileUI(user: User | null) {
   if (!user) return;
 
   const savedName = getSavedDisplayName(user);
-  const email = user.email || 'user@example.com';
   const profileDisplayName = savedName || 'Doto User';
   const greetingName = savedName || 'Friend';
 
   if (userDisplayName) userDisplayName.textContent = profileDisplayName;
-  if (userDisplayEmail) userDisplayEmail.textContent = email;
+  if (popoverUserName) popoverUserName.textContent = profileDisplayName;
 
-  // Calculate initials from saved display name (e.g., Alex Rivera -> AR), or email fallback
+  // Calculate initials from saved display name (e.g., Alex Rivera -> AR), or session email initial fallback
   const nameWords = savedName.split(/\s+/).filter(Boolean);
+  const emailInitial = user.email?.trim()?.[0] || 'D';
   const initials =
     nameWords.length >= 2
       ? `${nameWords[0][0]}${nameWords[nameWords.length - 1][0]}`.toUpperCase()
       : savedName
       ? savedName.slice(0, 2).toUpperCase()
-      : (email[0] || 'D').toUpperCase();
+      : emailInitial.toUpperCase();
 
   if (userAvatarInitials) userAvatarInitials.textContent = initials;
   if (topAvatarInitials) topAvatarInitials.textContent = initials;
+  if (popoverAvatarInitials) popoverAvatarInitials.textContent = initials;
 
   // Header dynamic greeting
   const now = new Date();
@@ -630,6 +637,7 @@ function enterPasswordRecoveryMode(): void {
   if (editDisplayNameModal && !editDisplayNameModal.classList.contains('hidden')) {
     closeDisplayNameModal();
   }
+  closeProfilePopover();
   closeMobileDrawer();
 
   if (dashboardContainer) dashboardContainer.classList.add('hidden');
@@ -699,6 +707,7 @@ function setAuthState(user: User | null) {
       isSavingDisplayName = false;
       closeDisplayNameModal();
     }
+    closeProfilePopover();
     if (dashboardContainer) dashboardContainer.classList.add('hidden');
     if (authContainer) authContainer.classList.remove('hidden');
 
@@ -1262,7 +1271,7 @@ function renderTasks() {
         type="button" 
         ${isRowPending ? 'disabled' : ''}
         aria-label="${task.completed ? 'Mark pending' : 'Mark completed'}"
-        class="checkbox-btn checkbox-animate relative z-10 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center shrink-0 transition-all duration-150 cursor-pointer active:scale-90 disabled:opacity-60 disabled:cursor-wait ${
+        class="checkbox-btn checkbox-animate relative z-10 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center shrink-0 transition-all duration-150 cursor-pointer active:scale-90 ${
           task.completed
             ? 'bg-[#E26D46] text-white shadow-xs'
             : 'border-2 border-stone-300 bg-white hover:border-[#E26D46] text-transparent'
@@ -1274,7 +1283,7 @@ function renderTasks() {
       </button>
 
       <!-- Task Card -->
-      <div class="flex-1 bg-white border border-[#F0EBE2] hover:border-[#E5DDD2] shadow-[0_2px_10px_rgba(42,30,23,0.03)] hover:shadow-[0_4px_16px_rgba(42,30,23,0.06)] rounded-2xl sm:rounded-3xl p-3.5 sm:p-4.5 flex items-center justify-between gap-3 transition-all duration-150 ${isRowPending ? 'opacity-60' : ''}">
+      <div class="flex-1 bg-white border border-[#F0EBE2] hover:border-[#E5DDD2] shadow-[0_2px_10px_rgba(42,30,23,0.03)] hover:shadow-[0_4px_16px_rgba(42,30,23,0.06)] rounded-2xl sm:rounded-3xl p-3.5 sm:p-4.5 flex items-center justify-between gap-3 transition-all duration-150">
         
         <div class="flex items-center gap-3 min-w-0 flex-1">
           <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl ${categoryIcon.bg} ${categoryIcon.text} flex items-center justify-center shrink-0 shadow-2xs">
@@ -1306,7 +1315,7 @@ function renderTasks() {
           <button 
             type="button" 
             ${isRowPending ? 'disabled' : ''}
-            class="delete-btn p-1.5 text-stone-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all cursor-pointer opacity-70 group-hover:opacity-100 disabled:opacity-40 disabled:cursor-wait"
+            class="delete-btn p-1.5 text-stone-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all cursor-pointer opacity-70 group-hover:opacity-100"
           >
             <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -1334,32 +1343,91 @@ function renderTasks() {
   attachTaskRowHandlers();
 }
 
+function setRowButtonsDisabled(taskId: string, disabled: boolean): void {
+  const row = document.getElementById(`row-${taskId}`);
+  if (!row) return;
+  const checkboxBtn = row.querySelector<HTMLButtonElement>('.checkbox-btn');
+  const deleteBtn = row.querySelector<HTMLButtonElement>('.delete-btn');
+  if (checkboxBtn) checkboxBtn.disabled = disabled;
+  if (deleteBtn) deleteBtn.disabled = disabled;
+}
+
+function restoreTaskInOrder(deletedTask: Task, fallbackIndex: number): void {
+  if (tasks.some((t) => t.id === deletedTask.id)) return;
+
+  const deletedTime = Date.parse(deletedTask.created_at);
+  if (!Number.isNaN(deletedTime)) {
+    const insertIndex = tasks.findIndex((t) => {
+      const time = Date.parse(t.created_at);
+      return !Number.isNaN(time) && time <= deletedTime;
+    });
+    if (insertIndex !== -1) {
+      tasks.splice(insertIndex, 0, deletedTask);
+      return;
+    }
+    tasks.push(deletedTask);
+    return;
+  }
+
+  const clampedIndex = Math.max(0, Math.min(fallbackIndex, tasks.length));
+  tasks.splice(clampedIndex, 0, deletedTask);
+}
+
 function attachTaskRowHandlers(): void {
   document.querySelectorAll<HTMLButtonElement>('.checkbox-btn').forEach((btn) => {
     btn.onclick = async () => {
       const id = btn.dataset.id;
-      if (!id || pendingTaskIds.has(id)) return;
+      if (!id || pendingTaskIds.has(id) || !currentUser) return;
 
-      const target = tasks.find((t) => t.id === id);
-      if (!target) return;
+      const targetIndex = tasks.findIndex((t) => t.id === id);
+      if (targetIndex === -1) return;
 
-      const nextCompleted = !target.completed;
+      const target = tasks[targetIndex];
+      const previousCompleted = target.completed;
+      const nextCompleted = !previousCompleted;
+      const requestUserId = currentUser.id;
+      const requestFetchId = activeFetchId;
+
+      // Optimistic UI update: apply immediately across state, counters, and views
       pendingTaskIds.add(id);
-      btn.disabled = true;
-      btn.classList.add('opacity-60', 'cursor-wait');
+      target.completed = nextCompleted;
+      tasksLoadError = null;
+      updateCounts();
+      renderTasks();
 
       try {
-        tasksLoadError = null;
-        await updateUserTaskCompletion(id, nextCompleted);
-        await loadTasksFromSupabase();
+        const updatedDbTask = await updateUserTaskCompletion(id, nextCompleted);
+        if (
+          currentUser?.id === requestUserId &&
+          activeFetchId === requestFetchId &&
+          !isPasswordRecoveryMode
+        ) {
+          const idx = tasks.findIndex((t) => t.id === id);
+          if (idx !== -1) {
+            tasks[idx] = mapDbTaskToTask(updatedDbTask);
+          }
+        }
       } catch (err: unknown) {
-        const msg = formatDatabaseError(err);
-        tasksLoadError = msg;
-        updateTaskStatusUI();
-        showToast(msg);
+        if (
+          currentUser?.id === requestUserId &&
+          activeFetchId === requestFetchId &&
+          !isPasswordRecoveryMode
+        ) {
+          const idx = tasks.findIndex((t) => t.id === id);
+          if (idx !== -1) {
+            tasks[idx].completed = previousCompleted;
+          }
+          const msg = formatDatabaseError(err);
+          tasksLoadError = msg;
+          pendingTaskIds.delete(id);
+          updateCounts();
+          renderTasks();
+          showToast(`Could not update task: ${msg}`);
+          return;
+        }
       } finally {
         pendingTaskIds.delete(id);
-        renderTasks();
+        setRowButtonsDisabled(id, false);
       }
     };
   });
@@ -1367,35 +1435,42 @@ function attachTaskRowHandlers(): void {
   document.querySelectorAll<HTMLButtonElement>('.delete-btn').forEach((btn) => {
     btn.onclick = async () => {
       const id = btn.dataset.id;
-      if (!id || pendingTaskIds.has(id)) return;
+      if (!id || pendingTaskIds.has(id) || !currentUser) return;
 
+      const taskIndex = tasks.findIndex((t) => t.id === id);
+      if (taskIndex === -1) return;
+
+      const deletedTask: Task = { ...tasks[taskIndex] };
+      const requestUserId = currentUser.id;
+      const requestFetchId = activeFetchId;
+
+      // Optimistic removal: remove task and update counters/UI immediately
       pendingTaskIds.add(id);
-      btn.disabled = true;
-      const row = document.getElementById(`row-${id}`);
-      if (row) {
-        row.classList.add('opacity-60');
-      }
+      tasks.splice(taskIndex, 1);
+      tasksLoadError = null;
+      updateCounts();
+      renderTasks();
+      showToast('Task deleted');
 
       try {
-        tasksLoadError = null;
         await deleteUserTask(id);
-        if (row) {
-          row.classList.add('task-fade-out');
-          await new Promise((resolve) => setTimeout(resolve, 160));
-        }
-        await loadTasksFromSupabase();
-        showToast('Task deleted');
       } catch (err: unknown) {
-        const msg = formatDatabaseError(err);
-        tasksLoadError = msg;
-        updateTaskStatusUI();
-        showToast(msg);
-        if (row) {
-          row.classList.remove('opacity-60', 'task-fade-out');
+        if (
+          currentUser?.id === requestUserId &&
+          activeFetchId === requestFetchId &&
+          !isPasswordRecoveryMode
+        ) {
+          restoreTaskInOrder(deletedTask, taskIndex);
+          const msg = formatDatabaseError(err);
+          tasksLoadError = msg;
+          pendingTaskIds.delete(id);
+          updateCounts();
+          renderTasks();
+          showToast(`Could not delete task: ${msg}`);
+          return;
         }
       } finally {
         pendingTaskIds.delete(id);
-        renderTasks();
       }
     };
   });
@@ -1542,12 +1617,72 @@ function closeDisplayNameModal(): void {
   updateDisplayNameCharCount();
 }
 
+let profilePopoverRequestId = 0;
+
+async function openProfilePopover(): Promise<void> {
+  if (!currentUser || isPasswordRecoveryMode || !profilePopover) return;
+
+  const requestId = ++profilePopoverRequestId;
+  const savedName = getSavedDisplayName(currentUser);
+  if (popoverUserName) {
+    popoverUserName.textContent = savedName || 'Doto User';
+  }
+  if (popoverUserEmail) {
+    popoverUserEmail.textContent = 'Loading...';
+  }
+
+  profilePopover.classList.remove('hidden');
+  if (profileTriggerBtn) {
+    profileTriggerBtn.setAttribute('aria-expanded', 'true');
+  }
+
+  const session = await getSession();
+  if (requestId !== profilePopoverRequestId || profilePopover.classList.contains('hidden')) {
+    return;
+  }
+
+  const sessionUser = session?.user ?? null;
+  if (sessionUser) {
+    const latestName = getSavedDisplayName(sessionUser);
+    if (popoverUserName) {
+      popoverUserName.textContent = latestName || 'Doto User';
+    }
+  }
+
+  if (popoverUserEmail) {
+    popoverUserEmail.textContent = sessionUser?.email || 'No email available';
+  }
+}
+
+function closeProfilePopover(): void {
+  profilePopoverRequestId++;
+  if (profilePopover) {
+    profilePopover.classList.add('hidden');
+  }
+  if (profileTriggerBtn) {
+    profileTriggerBtn.setAttribute('aria-expanded', 'false');
+  }
+  if (popoverUserEmail) {
+    popoverUserEmail.textContent = '';
+  }
+}
+
+async function toggleProfilePopover(): Promise<void> {
+  if (!profilePopover) return;
+  if (profilePopover.classList.contains('hidden')) {
+    await openProfilePopover();
+  } else {
+    closeProfilePopover();
+  }
+}
+
 function openMobileDrawer(): void {
   sidebar.classList.remove('-translate-x-full');
   mobileDrawerBackdrop.classList.remove('hidden');
 }
 
 function closeMobileDrawer(): void {
+  closeProfilePopover();
   sidebar.classList.add('-translate-x-full');
   mobileDrawerBackdrop.classList.add('hidden');
 }
@@ -1940,11 +2075,44 @@ document.addEventListener('DOMContentLoaded', async () => {
         closeDisplayNameModal();
       } else if (!addTaskModal.classList.contains('hidden')) {
         closeModal();
+      } else if (profilePopover && !profilePopover.classList.contains('hidden')) {
+        closeProfilePopover();
+        profileTriggerBtn?.focus();
+      } else if (sidebar && !sidebar.classList.contains('-translate-x-full')) {
+        closeMobileDrawer();
       } else if (searchInput && document.activeElement === searchInput && searchInput.value) {
         handleSearchInput('');
         searchInput.blur();
       }
     }
+  });
+
+  // Profile Popover triggers & outside-click dismissal
+  if (profileTriggerBtn) {
+    profileTriggerBtn.onclick = () => {
+      void toggleProfilePopover();
+    };
+  }
+  if (profilePopoverCloseBtn) {
+    profilePopoverCloseBtn.onclick = () => {
+      closeProfilePopover();
+      profileTriggerBtn?.focus();
+    };
+  }
+  if (profilePopoverDismissBtn) {
+    profilePopoverDismissBtn.onclick = () => {
+      closeProfilePopover();
+      profileTriggerBtn?.focus();
+    };
+  }
+  document.addEventListener('click', (e) => {
+    if (!profilePopover || profilePopover.classList.contains('hidden')) return;
+    const target = e.target as Node | null;
+    if (!target) return;
+    if (profilePopover.contains(target) || profileTriggerBtn?.contains(target)) {
+      return;
+    }
+    closeProfilePopover();
   });
 
   // Modal open triggers
@@ -1957,6 +2125,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Edit Display Name Modal triggers & submission
   if (editDisplayNameBtn) {
     editDisplayNameBtn.onclick = () => {
+      closeProfilePopover();
       closeMobileDrawer();
       openDisplayNameModal();
     };

@@ -15,6 +15,8 @@ import {
   requestPasswordReset,
   verifyRecoveryTokenHash,
   updateUserPassword,
+  MAX_DISPLAY_NAME_LENGTH,
+  updateUserDisplayName,
   signOutUser,
   getSession,
   onAuthStateChange,
@@ -259,6 +261,7 @@ const userAvatarInitials = document.getElementById('user-avatar-initials') as HT
 const topAvatarInitials = document.getElementById('top-avatar-initials') as HTMLElement;
 const sidebarLogoutBtn = document.getElementById('sidebar-logout-btn') as HTMLButtonElement;
 const mobileLogoutBtn = document.getElementById('mobile-logout-btn') as HTMLButtonElement;
+const editDisplayNameBtn = document.getElementById('edit-display-name-btn') as HTMLButtonElement | null;
 const greetingHeading = document.getElementById('greeting-heading') as HTMLElement;
 const currentDateText = document.getElementById('current-date-text') as HTMLElement;
 
@@ -343,6 +346,22 @@ const mobileAddBtn = document.getElementById('mobile-add-btn') as HTMLButtonElem
 const closeModalBtn = document.getElementById('close-modal-btn') as HTMLButtonElement;
 const cancelModalBtn = document.getElementById('cancel-modal-btn') as HTMLButtonElement;
 
+// Edit Display Name Modal Elements
+const editDisplayNameModal = document.getElementById('edit-display-name-modal') as HTMLDivElement | null;
+const editDisplayNameForm = document.getElementById('edit-display-name-form') as HTMLFormElement | null;
+const displayNameErrorBanner = document.getElementById('display-name-error-banner') as HTMLDivElement | null;
+const displayNameErrorText = document.getElementById('display-name-error-text') as HTMLElement | null;
+const currentDisplayNameText = document.getElementById('current-display-name-text') as HTMLElement | null;
+const displayNameInput = document.getElementById('display-name-input') as HTMLInputElement | null;
+const displayNameCharCount = document.getElementById('display-name-char-count') as HTMLElement | null;
+const displayNameInputError = document.getElementById('display-name-input-error') as HTMLElement | null;
+const displayNameInputErrorText = document.getElementById('display-name-input-error-text') as HTMLElement | null;
+const closeDisplayNameModalBtn = document.getElementById('close-display-name-modal-btn') as HTMLButtonElement | null;
+const cancelDisplayNameBtn = document.getElementById('cancel-display-name-btn') as HTMLButtonElement | null;
+const saveDisplayNameBtn = document.getElementById('save-display-name-btn') as HTMLButtonElement | null;
+const saveDisplayNameSpinner = document.getElementById('save-display-name-spinner') as unknown as SVGElement | null;
+const saveDisplayNameText = document.getElementById('save-display-name-text') as HTMLElement | null;
+
 // Toast Elements
 const toastEl = document.getElementById('toast-notification') as HTMLDivElement;
 const toastMessageEl = document.getElementById('toast-message') as HTMLElement;
@@ -376,27 +395,46 @@ function showAuthCard(card: 'login' | 'signup' | 'forgot' | 'verify' | 'reset') 
 }
 
 /**
+ * Resolve the user's saved display name from Supabase Auth user metadata.
+ * Prioritizes `display_name`, then falls back to `full_name` or `name`.
+ */
+function getSavedDisplayName(user: User | null): string {
+  if (!user) return '';
+  const meta = user.user_metadata as Record<string, unknown> | undefined;
+  const rawDisplayName = typeof meta?.display_name === 'string' ? meta.display_name.trim() : '';
+  if (rawDisplayName) return rawDisplayName;
+
+  const rawFullName = typeof meta?.full_name === 'string' ? meta.full_name.trim() : '';
+  if (rawFullName) return rawFullName;
+
+  const rawName = typeof meta?.name === 'string' ? meta.name.trim() : '';
+  if (rawName) return rawName;
+
+  return '';
+}
+
+/**
  * Update user display in dashboard
  */
 function updateUserProfileUI(user: User | null) {
   if (!user) return;
 
-  const fullName = (user.user_metadata?.full_name as string) || '';
+  const savedName = getSavedDisplayName(user);
   const email = user.email || 'user@example.com';
-  const displayName = fullName || email.split('@')[0] || 'User';
+  const profileDisplayName = savedName || 'Doto User';
+  const greetingName = savedName || 'Friend';
 
-  if (userDisplayName) userDisplayName.textContent = displayName;
+  if (userDisplayName) userDisplayName.textContent = profileDisplayName;
   if (userDisplayEmail) userDisplayEmail.textContent = email;
 
-  // Calculate initials (e.g., Alex Rivera -> AR)
-  const initials = fullName
-    ? fullName
-        .split(' ')
-        .map((p) => p[0])
-        .join('')
-        .toUpperCase()
-        .slice(0, 2)
-    : displayName.slice(0, 2).toUpperCase();
+  // Calculate initials from saved display name (e.g., Alex Rivera -> AR), or email fallback
+  const nameWords = savedName.split(/\s+/).filter(Boolean);
+  const initials =
+    nameWords.length >= 2
+      ? `${nameWords[0][0]}${nameWords[nameWords.length - 1][0]}`.toUpperCase()
+      : savedName
+      ? savedName.slice(0, 2).toUpperCase()
+      : (email[0] || 'D').toUpperCase();
 
   if (userAvatarInitials) userAvatarInitials.textContent = initials;
   if (topAvatarInitials) topAvatarInitials.textContent = initials;
@@ -409,7 +447,7 @@ function updateUserProfileUI(user: User | null) {
   else if (hours >= 17) timeGreeting = 'Evening';
 
   if (greetingHeading) {
-    greetingHeading.textContent = `${timeGreeting}, ${displayName}`;
+    greetingHeading.textContent = `${timeGreeting}, ${greetingName}`;
   }
 }
 
@@ -589,6 +627,9 @@ function enterPasswordRecoveryMode(): void {
   if (addTaskModal && !addTaskModal.classList.contains('hidden')) {
     closeModal();
   }
+  if (editDisplayNameModal && !editDisplayNameModal.classList.contains('hidden')) {
+    closeDisplayNameModal();
+  }
   closeMobileDrawer();
 
   if (dashboardContainer) dashboardContainer.classList.add('hidden');
@@ -651,6 +692,13 @@ function setAuthState(user: User | null) {
     updateCounts();
     renderTasks();
 
+    if (addTaskModal && !addTaskModal.classList.contains('hidden')) {
+      closeModal();
+    }
+    if (editDisplayNameModal && !editDisplayNameModal.classList.contains('hidden')) {
+      isSavingDisplayName = false;
+      closeDisplayNameModal();
+    }
     if (dashboardContainer) dashboardContainer.classList.add('hidden');
     if (authContainer) authContainer.classList.remove('hidden');
 
@@ -1441,6 +1489,59 @@ function closeModal(): void {
   addTaskForm.reset();
 }
 
+let isSavingDisplayName = false;
+
+function clearDisplayNameErrors(): void {
+  if (displayNameInput) {
+    displayNameInput.classList.remove('border-red-500', 'focus:ring-red-500/20', 'focus:border-red-500');
+  }
+  if (displayNameInputError) {
+    displayNameInputError.classList.add('hidden');
+  }
+  if (displayNameErrorBanner) {
+    displayNameErrorBanner.classList.add('hidden');
+  }
+}
+
+function updateDisplayNameCharCount(): void {
+  if (!displayNameCharCount || !displayNameInput) return;
+  const len = displayNameInput.value.length;
+  displayNameCharCount.textContent = `${len}/${MAX_DISPLAY_NAME_LENGTH}`;
+}
+
+function openDisplayNameModal(): void {
+  if (!currentUser || isPasswordRecoveryMode || !editDisplayNameModal) return;
+
+  clearDisplayNameErrors();
+  const savedName = getSavedDisplayName(currentUser);
+
+  if (currentDisplayNameText) {
+    currentDisplayNameText.textContent = savedName || 'Not set yet';
+  }
+
+  if (displayNameInput) {
+    displayNameInput.value = savedName;
+  }
+
+  updateDisplayNameCharCount();
+  editDisplayNameModal.classList.remove('hidden');
+
+  if (displayNameInput) {
+    setTimeout(() => {
+      displayNameInput.focus();
+      displayNameInput.select();
+    }, 60);
+  }
+}
+
+function closeDisplayNameModal(): void {
+  if (isSavingDisplayName || !editDisplayNameModal) return;
+  editDisplayNameModal.classList.add('hidden');
+  clearDisplayNameErrors();
+  editDisplayNameForm?.reset();
+  updateDisplayNameCharCount();
+}
+
 function openMobileDrawer(): void {
   sidebar.classList.remove('-translate-x-full');
   mobileDrawerBackdrop.classList.remove('hidden');
@@ -1835,7 +1936,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       searchInput?.focus();
     }
     if (e.key === 'Escape') {
-      if (!addTaskModal.classList.contains('hidden')) {
+      if (editDisplayNameModal && !editDisplayNameModal.classList.contains('hidden')) {
+        closeDisplayNameModal();
+      } else if (!addTaskModal.classList.contains('hidden')) {
         closeModal();
       } else if (searchInput && document.activeElement === searchInput && searchInput.value) {
         handleSearchInput('');
@@ -1850,6 +1953,100 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (mobileAddBtn) mobileAddBtn.onclick = openModal;
   if (closeModalBtn) closeModalBtn.onclick = closeModal;
   if (cancelModalBtn) cancelModalBtn.onclick = closeModal;
+
+  // Edit Display Name Modal triggers & submission
+  if (editDisplayNameBtn) {
+    editDisplayNameBtn.onclick = () => {
+      closeMobileDrawer();
+      openDisplayNameModal();
+    };
+  }
+  if (closeDisplayNameModalBtn) closeDisplayNameModalBtn.onclick = closeDisplayNameModal;
+  if (cancelDisplayNameBtn) cancelDisplayNameBtn.onclick = closeDisplayNameModal;
+
+  if (editDisplayNameModal) {
+    editDisplayNameModal.onclick = (e) => {
+      if (e.target === editDisplayNameModal) {
+        closeDisplayNameModal();
+      }
+    };
+  }
+
+  if (displayNameInput) {
+    displayNameInput.addEventListener('input', () => {
+      updateDisplayNameCharCount();
+      if (displayNameInput.value.trim().length > 0 && displayNameInput.value.trim().length <= MAX_DISPLAY_NAME_LENGTH) {
+        clearDisplayNameErrors();
+      }
+    });
+  }
+
+  if (editDisplayNameForm) {
+    editDisplayNameForm.onsubmit = async (e) => {
+      e.preventDefault();
+      if (!currentUser || isPasswordRecoveryMode || isSavingDisplayName) return;
+
+      const rawValue = displayNameInput ? displayNameInput.value : '';
+      const trimmedName = rawValue.trim();
+
+      if (!trimmedName) {
+        if (displayNameInput) {
+          displayNameInput.classList.add('border-red-500', 'focus:ring-red-500/20', 'focus:border-red-500');
+          displayNameInput.focus();
+        }
+        if (displayNameInputError && displayNameInputErrorText) {
+          displayNameInputErrorText.textContent = 'Please enter a display name.';
+          displayNameInputError.classList.remove('hidden');
+        }
+        return;
+      }
+
+      if (trimmedName.length > MAX_DISPLAY_NAME_LENGTH) {
+        if (displayNameInput) {
+          displayNameInput.classList.add('border-red-500', 'focus:ring-red-500/20', 'focus:border-red-500');
+          displayNameInput.focus();
+        }
+        if (displayNameInputError && displayNameInputErrorText) {
+          displayNameInputErrorText.textContent = `Display name must be ${MAX_DISPLAY_NAME_LENGTH} characters or fewer.`;
+          displayNameInputError.classList.remove('hidden');
+        }
+        return;
+      }
+
+      clearDisplayNameErrors();
+      isSavingDisplayName = true;
+      if (saveDisplayNameBtn) saveDisplayNameBtn.disabled = true;
+      if (cancelDisplayNameBtn) cancelDisplayNameBtn.disabled = true;
+      if (closeDisplayNameModalBtn) closeDisplayNameModalBtn.disabled = true;
+      if (saveDisplayNameSpinner) saveDisplayNameSpinner.classList.remove('hidden');
+      if (saveDisplayNameText) saveDisplayNameText.textContent = 'Saving...';
+
+      try {
+        const updatedUser = await updateUserDisplayName(trimmedName);
+        currentUser = updatedUser;
+        updateUserProfileUI(updatedUser);
+
+        isSavingDisplayName = false;
+        closeDisplayNameModal();
+        showToast('Display name updated!');
+      } catch (err: unknown) {
+        const msg = formatAuthError(err);
+        if (displayNameErrorBanner && displayNameErrorText) {
+          displayNameErrorText.textContent = msg;
+          displayNameErrorBanner.classList.remove('hidden');
+        } else {
+          showToast(msg);
+        }
+      } finally {
+        isSavingDisplayName = false;
+        if (saveDisplayNameBtn) saveDisplayNameBtn.disabled = false;
+        if (cancelDisplayNameBtn) cancelDisplayNameBtn.disabled = false;
+        if (closeDisplayNameModalBtn) closeDisplayNameModalBtn.disabled = false;
+        if (saveDisplayNameSpinner) saveDisplayNameSpinner.classList.add('hidden');
+        if (saveDisplayNameText) saveDisplayNameText.textContent = 'Save';
+      }
+    };
+  }
 
   // Clear validation on title input
   if (taskTitleInput) {

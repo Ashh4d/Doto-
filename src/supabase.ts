@@ -323,6 +323,50 @@ export async function updateUserPassword(newPassword: string) {
   return data;
 }
 
+export const MAX_DISPLAY_NAME_LENGTH = 50;
+
+/**
+ * Update the currently authenticated user's display name in Supabase Auth user metadata.
+ * Enforces an active session so a user can only update their own display name.
+ */
+export async function updateUserDisplayName(displayName: string): Promise<User> {
+  if (!supabase) {
+    throw new Error('Supabase is not configured. Please add VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY.');
+  }
+
+  const trimmed = displayName.trim();
+  if (!trimmed) {
+    throw new Error('Please enter a display name.');
+  }
+  if (trimmed.length > MAX_DISPLAY_NAME_LENGTH) {
+    throw new Error(`Display name must be ${MAX_DISPLAY_NAME_LENGTH} characters or fewer.`);
+  }
+
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) {
+    throw sessionError;
+  }
+  if (!session?.user?.id) {
+    throw new Error('Your session has expired. Please sign in again.');
+  }
+
+  const { data, error } = await supabase.auth.updateUser({
+    data: {
+      display_name: trimmed,
+    },
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  if (!data.user) {
+    throw new Error('Unable to update display name. Please try again.');
+  }
+
+  return data.user;
+}
+
 /**
  * Sign out current user
  */
